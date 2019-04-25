@@ -32,7 +32,14 @@ HEADERS += \
         mainwindow.h
 
 FORMS += \
-        mainwindow.ui
+      mainwindow.ui
+
+INCLUDEPATH += \
+            winpcap/Include
+
+LIBS += \
+     $$PWD/winpcap/Lib/Packet.lib \
+     $$PWD/winpcap/Lib/wpcap.lib
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
