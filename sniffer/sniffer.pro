@@ -26,20 +26,22 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    utilities.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    protocol.h \
+    utilities.h
 
 FORMS += \
       mainwindow.ui
 
 INCLUDEPATH += \
             winpcap/Include
-
-LIBS += \
-     $$PWD/winpcap/Lib/Packet.lib \
-     $$PWD/winpcap/Lib/wpcap.lib
+LIBS += -L $$PWD/winpcap/Lib/*.a
+LIBS += -L $$PWD/winpcap/Lib/Packet.lib
+LIBS += -L $$PWD/winpcap/Lib/wpcap.lib -lws2_32
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

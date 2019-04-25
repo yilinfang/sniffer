@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>LeoSniffer</string>
+   <string>Sniffer</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="minimumSize">
@@ -42,28 +42,28 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>0</y>
+      <y>40</y>
       <width>1024</width>
-      <height>743</height>
+      <height>703</height>
      </rect>
     </property>
     <property name="minimumSize">
      <size>
       <width>1024</width>
-      <height>743</height>
+      <height>703</height>
      </size>
     </property>
     <property name="maximumSize">
      <size>
       <width>1024</width>
-      <height>743</height>
+      <height>703</height>
      </size>
     </property>
     <property name="contextMenuPolicy">
      <enum>Qt::DefaultContextMenu</enum>
     </property>
     <property name="tabPosition">
-     <enum>QTabWidget::North</enum>
+     <enum>QTabWidget::West</enum>
     </property>
     <property name="tabShape">
      <enum>QTabWidget::Rounded</enum>
@@ -75,39 +75,11 @@
      <attribute name="title">
       <string>抓包</string>
      </attribute>
-     <widget class="QComboBox" name="comboBox_devs_tab1">
-      <property name="geometry">
-       <rect>
-        <x>100</x>
-        <y>10</y>
-        <width>900</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <item>
-       <property name="text">
-        <string>请选择一个适配器</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QLabel" name="label_1">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>10</y>
-        <width>60</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>适配器:</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_2">
       <property name="geometry">
        <rect>
-        <x>30</x>
-        <y>40</y>
+        <x>20</x>
+        <y>10</y>
         <width>60</width>
         <height>20</height>
        </rect>
@@ -119,8 +91,8 @@
      <widget class="QComboBox" name="comboBox_filter_tab1">
       <property name="geometry">
        <rect>
-        <x>100</x>
-        <y>40</y>
+        <x>90</x>
+        <y>10</y>
         <width>661</width>
         <height>20</height>
        </rect>
@@ -134,8 +106,8 @@
      <widget class="QPushButton" name="pushButton_startPcap_tab1">
       <property name="geometry">
        <rect>
-        <x>780</x>
-        <y>40</y>
+        <x>770</x>
+        <y>10</y>
         <width>100</width>
         <height>22</height>
        </rect>
@@ -147,8 +119,8 @@
      <widget class="QPushButton" name="pushButton_stopPcap_tab1">
       <property name="geometry">
        <rect>
-        <x>900</x>
-        <y>40</y>
+        <x>890</x>
+        <y>10</y>
         <width>100</width>
         <height>22</height>
        </rect>
@@ -160,38 +132,33 @@
      <widget class="QTreeWidget" name="treeWidget_tab1">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>390</y>
+        <x>10</x>
+        <y>360</y>
         <width>250</width>
         <height>311</height>
        </rect>
       </property>
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
      </widget>
      <widget class="QTextEdit" name="textEdit_tab1">
       <property name="geometry">
        <rect>
-        <x>289</x>
-        <y>390</y>
+        <x>280</x>
+        <y>360</y>
         <width>711</width>
         <height>220</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QTableView" name="tableView_tab1">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>70</y>
-        <width>980</width>
-        <height>301</height>
        </rect>
       </property>
      </widget>
      <widget class="QLabel" name="label_TCP_tab1">
       <property name="geometry">
        <rect>
-        <x>300</x>
-        <y>630</y>
+        <x>280</x>
+        <y>600</y>
         <width>150</width>
         <height>20</height>
        </rect>
@@ -203,8 +170,8 @@
      <widget class="QLabel" name="label_UDP_tab1">
       <property name="geometry">
        <rect>
-        <x>300</x>
-        <y>670</y>
+        <x>280</x>
+        <y>640</y>
         <width>150</width>
         <height>20</height>
        </rect>
@@ -216,8 +183,8 @@
      <widget class="QLabel" name="label_HTTP_tab1">
       <property name="geometry">
        <rect>
-        <x>470</x>
-        <y>630</y>
+        <x>450</x>
+        <y>600</y>
         <width>150</width>
         <height>20</height>
        </rect>
@@ -229,8 +196,8 @@
      <widget class="QLabel" name="label_ARP_tab1">
       <property name="geometry">
        <rect>
-        <x>470</x>
-        <y>670</y>
+        <x>450</x>
+        <y>640</y>
         <width>150</width>
         <height>20</height>
        </rect>
@@ -242,8 +209,8 @@
      <widget class="QLabel" name="label_ICMP_tab1">
       <property name="geometry">
        <rect>
-        <x>640</x>
-        <y>630</y>
+        <x>620</x>
+        <y>600</y>
         <width>150</width>
         <height>20</height>
        </rect>
@@ -255,8 +222,8 @@
      <widget class="QLabel" name="label_IPV4_tab1">
       <property name="geometry">
        <rect>
-        <x>640</x>
-        <y>670</y>
+        <x>620</x>
+        <y>640</y>
         <width>150</width>
         <height>20</height>
        </rect>
@@ -268,8 +235,8 @@
      <widget class="QLabel" name="label_other_tab1">
       <property name="geometry">
        <rect>
-        <x>810</x>
-        <y>630</y>
+        <x>790</x>
+        <y>600</y>
         <width>150</width>
         <height>20</height>
        </rect>
@@ -281,14 +248,24 @@
      <widget class="QLabel" name="label_all_tab1">
       <property name="geometry">
        <rect>
-        <x>810</x>
-        <y>670</y>
+        <x>790</x>
+        <y>640</y>
         <width>150</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
        <string>合计:</string>
+      </property>
+     </widget>
+     <widget class="QTableWidget" name="tableWidget_tab1">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>40</y>
+        <width>980</width>
+        <height>310</height>
+       </rect>
       </property>
      </widget>
     </widget>
@@ -302,6 +279,34 @@
       <string>关于</string>
      </attribute>
     </widget>
+   </widget>
+   <widget class="QLabel" name="label_1">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>适配器:</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_devs">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>10</y>
+      <width>931</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text">
+      <string>请选择一个适配器</string>
+     </property>
+    </item>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar">
