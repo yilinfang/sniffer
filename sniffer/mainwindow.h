@@ -7,6 +7,8 @@
 #include <pcap.h>
 #include "protocol.h"
 #include "utilities.h"
+#include "capthread.h"
+#include <QDir>
 
 namespace Ui {
 class MainWindow;
@@ -22,6 +24,7 @@ public:
 
 private:
     int initCap();
+    int startCap();
     void showHexData(u_char* data, int len);
     void showProtoTree(datapkt* data, int num);
 
@@ -29,6 +32,10 @@ private slots:
     void on_comboBox_devs_currentIndexChanged(int index);
     void on_comboBox_filter_tab1_currentIndexChanged(int index);
     void on_tableWidget_tab1_cellClicked(int row, int column);
+    void on_updateCapInfo(QString time, QString srcMac, QString destMac, QString len, QString protoType, QString srcIP, QString dstIP);
+    void on_pushButton_startPcap_tab1_clicked();
+
+    void on_pushButton_stopPcap_tab1_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -42,6 +49,8 @@ private:
     datapktVec dataPktLink;
     dataVec dataCharLink;
     int rowCount;
+    CapThread *capThread;
+    char filepath[512];
 };
 
 #endif // MAINWINDOW_H

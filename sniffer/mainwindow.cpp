@@ -25,6 +25,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableWidget_tab1->setColumnWidth(6, 145);
     ui->tableWidget_tab1->setColumnWidth(7, 145);
     ui->tableWidget_tab1->verticalHeader()->setVisible(false);
+    ui->treeWidget_tab1->setColumnCount(1);
+    ui->treeWidget_tab1->setHeaderLabel(tr("协议分析"));
+    ui->treeWidget_tab1->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->treeWidget_tab1->header()->setStretchLastSection(false);
     if(initCap() < 0)
     {
         QMessageBox::warning(this, tr("sniffer"), tr("无法找到网络适配器"),QMessageBox::Yes);
@@ -33,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         ui->comboBox_devs->addItem(QString(dev->description));
     }
+    npacket = (pktCount *)malloc(sizeof(pktCount));
+    memset(npacket, 0, sizeof(pktCount));
+    capThread = NULL;
 }
 
 MainWindow::~MainWindow()
@@ -40,6 +47,36 @@ MainWindow::~MainWindow()
     if(alldev)
     {
         pcap_freealldevs(alldev);
+    }
+    if(capThread)
+    {
+        if(capThread->isRunning())
+        {
+            capThread->stop();
+            capThread->quit();
+        }
+        while(!capThread->isFinished());
+        delete capThread;
+        capThread = NULL;
+    }
+    for(std::vector<datapkt *>::iterator it = dataPktLink.begin(); it != dataPktLink.end(); it++)
+    {
+        free((*it)->ethh);
+        free((*it)->arph);
+        free((*it)->iph);
+        free((*it)->icmph);
+        free((*it)->udph);
+        free((*it)->tcph);
+        free((*it)->apph);
+        free(*it);
+    }
+    for(std::vector<u_char *>::iterator it = dataCharLink.begin(); it != dataCharLink.end(); it++)
+    {
+        free(*it);
+    }
+    if(npacket)
+    {
+        free(npacket);
     }
     delete ui;
 }
@@ -56,6 +93,101 @@ int MainWindow::initCap()
         devCount++;
     }
     return 0;
+}
+
+int MainWindow::startCap()
+{
+    u_int netmask;
+    struct bpf_program fcode;   //bpf_program结构体在编译BPF过滤规则函数执行成功后将会被填
+    int filterIndex = ui->comboBox_filter_tab1->currentIndex();
+
+    if(!(adhandle = pcap_open_live(dev->name,    //设备名
+                                  65536,    //捕获数据包长度
+                                  1,    //设置成混杂模式
+                                  1000,    //读超时设置
+                                  errbuf  //错误信息缓冲
+                                  )))
+    {
+        QMessageBox::warning(this, "open error", tr("网卡接口打开失败"), QMessageBox::Ok);
+        pcap_freealldevs(alldev);
+        alldev = NULL;
+        return -1;
+    }
+
+    //检查链路层，判断所在网络是否为以太网
+    if(pcap_datalink(adhandle) != DLT_EN10MB)
+    {
+        QMessageBox::warning(this, "Sniffer", tr("只支持以太网环境"), QMessageBox::Ok);
+        pcap_freealldevs(alldev);
+        alldev = NULL;
+        return -1;
+    }
+
+    //获取接口第一个地址的子网掩码，如果接口没有地址，假设这个接口在C类网络中
+    if(dev->addresses)
+    {
+        netmask = ((struct sockaddr_in *)(dev->addresses->netmask))->sin_addr.S_un.S_addr;
+    }
+    else
+    {
+        netmask = 0xffffff;
+
+    }
+
+    if(filterIndex == 0)
+    {
+        char filter[] = "";
+        if(pcap_compile(adhandle, &fcode, filter, 1, netmask) < 0)
+        {
+            QMessageBox::warning(this, "Sniff", tr("无法编译包过滤器，请检查语法"), QMessageBox::Ok);
+            pcap_freealldevs(alldev);
+            alldev = NULL;
+            return -1;
+        }
+    }
+    else
+    {
+        QByteArray ba = ui->comboBox_filter_tab1->currentText().toLatin1();
+        char *filter = NULL;
+        filter = ba.data();     //上述转换中要求QString中不含有中文，否则会出现乱码
+        if(pcap_compile(adhandle, &fcode, filter, 1, netmask) < 0)
+        {
+            QMessageBox::warning(this, "Sniff", tr("无法编译包过滤器，请检查语法"), QMessageBox::Ok);
+            pcap_freealldevs(alldev);
+            alldev = NULL;
+            return -1;
+        }
+
+    }
+
+    //设置过滤器
+    if(pcap_setfilter(adhandle, &fcode) < 0)
+    {
+        QMessageBox::warning(this, "Sniff", tr("设置过滤器发生错误"), QMessageBox::Ok);
+        pcap_freealldevs(alldev);
+        alldev = NULL;
+        return -1;
+    }
+
+    //获取当前路径
+    QString path = QDir::currentPath();
+    qDebug() << path << endl;
+    //判断当前路径下文件是否存在
+    QString direcPath = path + "//SavedData";
+    QDir dir(direcPath);
+    if(!dir.exists())
+    {
+        if(!dir.mkdir(direcPath))
+        {
+            QMessageBox::warning(this, "warning", tr("保存路径创建失败!"), QMessageBox::Ok);
+            return -1;
+        }
+    }
+    capThread = new CapThread(adhandle, npacket, dataPktLink, dataCharLink);
+    connect(capThread, SIGNAL(updateCapInfo(QString,QString,QString,QString,QString,QString,QString)), this, SLOT(on_updateCapInfo(QString,QString,QString,QString,QString,QString,QString)));
+    capThread->start();
+    return 1;
+
 }
 
 void MainWindow::showHexData(u_char *data, int len)
@@ -499,4 +631,92 @@ void MainWindow::on_tableWidget_tab1_cellClicked(int row, int column)
     int print_len = mem_data->len;
     showHexData(print_data, print_len);
     showProtoTree(mem_data, row + 1);
+    if(rowCount > 1)
+    {
+        ui->tableWidget_tab1->scrollToItem(ui->tableWidget_tab1->item(rowCount, 0), QAbstractItemView::PositionAtBottom);
+    }
+
+}
+
+void MainWindow::on_updateCapInfo(QString time, QString srcMac, QString destMac, QString len, QString protoType, QString srcIP, QString dstIP)
+{
+    rowCount = ui->tableWidget_tab1->rowCount();
+    ui->tableWidget_tab1->insertRow(rowCount);
+    QString number = QString::number(rowCount, 10);
+    ui->tableWidget_tab1->setItem(rowCount, 0, new QTableWidgetItem(number));
+    ui->tableWidget_tab1->setItem(rowCount, 1, new QTableWidgetItem(time));
+    ui->tableWidget_tab1->setItem(rowCount, 2, new QTableWidgetItem(srcMac));
+    ui->tableWidget_tab1->setItem(rowCount, 3, new QTableWidgetItem(destMac));
+    ui->tableWidget_tab1->setItem(rowCount, 4, new QTableWidgetItem(len));
+    ui->tableWidget_tab1->setItem(rowCount, 5, new QTableWidgetItem(protoType));
+    ui->tableWidget_tab1->setItem(rowCount, 6, new QTableWidgetItem(srcIP));
+    ui->tableWidget_tab1->setItem(rowCount, 7, new QTableWidgetItem(dstIP));
+    ui->label_TCP_tab1->setText("TCP:" + QString::number(npacket->n_tcp));
+    ui->label_UDP_tab1->setText("UDP:" + QString::number(npacket->n_udp));
+    ui->label_ICMP_tab1->setText("ICMP:" + QString::number(npacket->n_icmp));
+    ui->label_HTTP_tab1->setText("HTTP:" + QString::number(npacket->n_http));
+    ui->label_ARP_tab1->setText("ARP:" + QString::number(npacket->n_arp));
+    ui->label_IPV4_tab1->setText("IPV4:" + QString::number(npacket->n_ip));
+    ui->label_other_tab1->setText("其他:" + QString::number(npacket->n_other));
+    ui->label_all_tab1->setText("合计:" + QString::number(npacket->n_sum));
+}
+
+void MainWindow::on_pushButton_startPcap_tab1_clicked()
+{
+    for(std::vector<datapkt *>::iterator it = dataPktLink.begin(); it != dataPktLink.end(); it++)
+    {
+        free((*it)->ethh);
+        free((*it)->arph);
+        free((*it)->iph);
+        free((*it)->icmph);
+        free((*it)->udph);
+        free((*it)->tcph);
+        free((*it)->apph);
+        free(*it);
+    }
+    for(std::vector<u_char *>::iterator it = dataCharLink.begin(); it != dataCharLink.end(); it++)
+    {
+        free(*it);
+    }
+
+    datapktVec().swap(dataPktLink);
+    dataVec().swap(dataCharLink);
+
+    memset(npacket, 0, sizeof(pktCount));
+
+
+    if(capThread)
+    {
+        if(capThread->isRunning())
+        {
+            capThread->stop();
+            capThread->quit();
+        }
+        while(!capThread->isFinished());
+        delete capThread;
+        capThread = NULL;
+    }
+
+    ui->textEdit_tab1->clear();
+    ui->treeWidget_tab1->clear();
+    ui->tableWidget_tab1->clearContents();
+    ui->tableWidget_tab1->setRowCount(0);
+
+    if(startCap() < 0)
+    {
+        return;
+    }
+
+}
+
+void MainWindow::on_pushButton_stopPcap_tab1_clicked()
+{
+    if(capThread)
+    {
+        capThread->stop();
+        capThread->quit();
+        while(!capThread->isFinished());
+        delete capThread;
+        capThread = NULL;
+    }
 }

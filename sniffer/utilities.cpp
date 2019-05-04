@@ -1,18 +1,17 @@
 #include "utilities.h"
 #include <QDebug>
 
-//首先对链路层数据包进行分析
-int analyze_frame(const u_char *pkt, datapkt *data, pktCount *npacket)
+int utilities::analyze_frame(const u_char *pkt, datapkt *data, pktCount *npacket)
 {
     pktInitialAddress = pkt;
     ethhdr *ethh = (ethhdr *)pkt;
     data->ethh = (ethhdr *)malloc(sizeof(ethhdr));
-    if(data->ethh == NULL)
+    if (data->ethh == NULL)
     {
         qDebug() << "failed to malloc ethh space." << endl;
         return -1;
     }
-    for(int i = 0; i < 6; ++i)
+    for (int i = 0; i < 6; ++i)
     {
         data->ethh->dest[i] = ethh->dest[i];
         data->ethh->src[i] = ethh->src[i];
@@ -25,7 +24,7 @@ int analyze_frame(const u_char *pkt, datapkt *data, pktCount *npacket)
     int ret = 0;
 
     //对上层协议类型做进一步的判断，并做进一步的拆包分析
-    switch(data->ethh->type)
+    switch (data->ethh->type)
     {
     case PROTO_IP:
         ret = analyze_ip((u_char *)pkt + 14, data, npacket);
@@ -38,25 +37,23 @@ int analyze_frame(const u_char *pkt, datapkt *data, pktCount *npacket)
         ret = -1;
         break;
     }
-
     return ret;
-
 }
 
 //对链路层协议的上一层协议继续进行分析
-int analyze_arp(const u_char *pkt, datapkt *data, pktCount *npacket)
+int utilities::analyze_arp(const u_char *pkt, datapkt *data, pktCount *npacket)
 {
     arphdr *arph = (arphdr *)pkt;
     data->arph = (arphdr *)malloc(sizeof(arphdr));
-    if(data->arph == NULL)
+    if (data->arph == NULL)
     {
         qDebug() << "failed to malloc arph space!" << endl;
         return -1;
     }
     //复制IP以及MAC地址
-    for(int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)
     {
-        if(i < 4)
+        if (i < 4)
         {
             data->arph->senderIp[i] = arph->senderIp[i];
             data->arph->destIp[i] = arph->destIp[i];
@@ -70,25 +67,23 @@ int analyze_arp(const u_char *pkt, datapkt *data, pktCount *npacket)
     data->arph->hsize = arph->hsize;
     data->arph->prsize = arph->prsize;
     data->arph->opcode = ntohs(arph->opcode);
-
     strcpy(data->pktType, "ARP");
     npacket->n_arp++;
     return 1;
 }
 
 /*分析网络层：IP*/
-int analyze_ip(const u_char* pkt,datapkt *data, pktCount *npacket)
+int utilities::analyze_ip(const u_char *pkt, datapkt *data, pktCount *npacket)
 {
-    iphdr *iph = (iphdr*)pkt;
-    data->iph = (iphdr*)malloc(sizeof(iphdr));
-    if(data->iph == NULL)
+    iphdr *iph = (iphdr *)pkt;
+    data->iph = (iphdr *)malloc(sizeof(iphdr));
+    if (data->iph == NULL)
     {
-        qDebug() << "failed to malloc ip header space!" << endl;
         return -1;
     }
     data->iph->hchecksum = ntohs(iph->hchecksum);
     npacket->n_ip++;
-    for(int i = 0;i<4;i++)
+    for (int i = 0; i < 4; i++)
     {
         data->iph->daddr[i] = iph->daddr[i];
         data->iph->saddr[i] = iph->saddr[i];
@@ -102,18 +97,18 @@ int analyze_ip(const u_char* pkt,datapkt *data, pktCount *npacket)
     data->iph->proto = iph->proto;
     u_int ipheader_len = IP_HL(data->iph) * 4;
     int ret = 0;
-    switch(iph->proto)
+    switch (iph->proto)
     {
     case PROTO_ICMP:
-        ret = analyze_icmp((u_char*)iph+ipheader_len,data,npacket);
+        ret = analyze_icmp((u_char *)iph + ipheader_len, data, npacket);
         break;
     case PROTO_TCP:
-        ret = analyze_tcp((u_char*)iph+ipheader_len,data,npacket);
+        ret = analyze_tcp((u_char *)iph + ipheader_len, data, npacket);
         break;
     case PROTO_UDP:
-        ret = analyze_udp((u_char*)iph+ipheader_len,data,npacket);
+        ret = analyze_udp((u_char *)iph + ipheader_len, data, npacket);
         break;
-    default :
+    default:
         npacket->n_other++;
         ret = -1;
         break;
@@ -121,79 +116,79 @@ int analyze_ip(const u_char* pkt,datapkt *data, pktCount *npacket)
     return ret;
 }
 
-int analyze_icmp(const u_char *pkt, datapkt *data, pktCount *npacket)
+int utilities::analyze_icmp(const u_char *pkt, datapkt *data, pktCount *npacket)
 {
-    icmphdr* icmph = (icmphdr*)pkt;
-    data->icmph = (icmphdr*)malloc(sizeof(icmphdr));
-    if(NULL == data->icmph)
+    icmphdr *icmph = (icmphdr *)pkt;
+    data->icmph = (icmphdr *)malloc(sizeof(icmphdr));
+    if (NULL == data->icmph)
     {
-        return -1;
+        return  -1;
     }
     data->icmph->chk_sum = icmph->chk_sum;
     data->icmph->code = icmph->code;
-    data->icmph->seq =ntohs(icmph->seq);
+    data->icmph->seq = ntohs(icmph->seq);
     data->icmph->type = icmph->type;
     data->icmph->identification = ntohs(icmph->identification);
     data->icmph->chk_sum = ntohs(icmph->chk_sum);
-    strcpy(data->pktType,"ICMP");
+    strcpy(data->pktType, "ICMP");
     npacket->n_icmp++;
     return 1;
 }
 
-int analyze_tcp(const u_char *pkt, datapkt *data, pktCount *npacket)
+int utilities::analyze_tcp(const u_char *pkt, datapkt *data, pktCount *npacket)
 {
     tcphdr *tcphr = (tcphdr *)pkt;
     data->tcph = (tcphdr *)malloc(sizeof(tcphdr));
-    if(data->tcph == NULL)
+    if (data->tcph == NULL)
     {
-        qDebug() << "failed to malloc tcp header space!" << endl;
         return -1;
     }
     npacket->n_tcp++;
     data->tcph->srcPort = ntohs(tcphr->srcPort);
     data->tcph->destPort = ntohs(tcphr->destPort);
-    data->tcph->seq =ntohl(tcphr->seq);
+    data->tcph->seq = ntohl(tcphr->seq);
     data->tcph->ack_sql = ntohl(tcphr->ack_sql);
     data->tcph->th_offx2 = tcphr->th_offx2;
     data->tcph->th_flags = tcphr->th_flags;
     data->tcph->wnd_size = ntohs(tcphr->wnd_size);
     data->tcph->checksum = ntohs(tcphr->checksum);
     data->tcph->urg_ptr = ntohs(tcphr->urg_ptr);
-    strcpy(data->pktType, "TCP");
     //根据端口是否为80端口初步过滤出HTTP协议
-    if(data->tcph->srcPort == 80 || data->tcph->destPort == 80)
+    if (data->tcph->srcPort == 80 || data->tcph->destPort == 80)
     {
+
         u_char *httpdata = (u_char *)tcphr + TH_OFF(tcphr) * 4;
-        const char *token[] = {"GET","POST","HTTP/1.1","HTTP/1.0"};
+        const char *token[] = {"GET", "POST", "HTTP/1.1", "HTTP/1.0"};
         u_char *httpHeader;
-        for(int i = 0 ; i < 4 ; i ++)
+        for (int i = 0; i < 4; i++)
         {
-            httpHeader = (u_char *)strstr((char *)httpdata,token[i]);
-            if(httpHeader)
+            httpHeader = (u_char *)strstr((char *)httpdata, token[i]);
+            if (httpHeader)
             {
+
                 npacket->n_http++;
+                strcpy(data->pktType, "HTTP");
                 data->isHttp = true;
-                qDebug() << "debug info: find a http packet!" << endl;
                 int size = data->len - ((u_char *)httpdata - pktInitialAddress);
-                qDebug() << "size: " + size << endl;
                 data->httpsize = size;
                 data->apph = (u_char *)malloc(size * sizeof(u_char));
-                for(int j = 0; j < size; j++)
+                for (int j = 0; j < size; j++)
                 {
                     data->apph[j] = httpdata[j];
                 }
+                return 1;
             }
-
         }
     }
+    strcpy(data->pktType, "TCP");
     return 1;
 }
 
-int analyze_udp(const u_char *pkt, datapkt *data, pktCount *npacket)
+int utilities::analyze_udp(const u_char *pkt, datapkt *data, pktCount *npacket)
 {
     udphdr *udphr = (udphdr *)pkt;
     data->udph = (udphdr *)malloc(sizeof(udphdr));
-    if(data->udph == NULL)
+    if (data->udph == NULL)
     {
         qDebug() << "failed to malloc udp header space!" << endl;
         return -1;
@@ -202,7 +197,7 @@ int analyze_udp(const u_char *pkt, datapkt *data, pktCount *npacket)
     data->udph->dport = ntohs(udphr->dport);
     data->udph->len = ntohs(udphr->len);
     data->udph->crc = ntohs(udphr->crc);
-    strcpy(data->pktType,"UDP");
+    strcpy(data->pktType, "UDP");
     npacket->n_udp++;
     return 1;
 }

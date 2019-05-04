@@ -25,11 +25,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+    capthread.cpp \
         main.cpp \
         mainwindow.cpp \
     utilities.cpp
 
 HEADERS += \
+    capthread.h \
         mainwindow.h \
     protocol.h \
     utilities.h

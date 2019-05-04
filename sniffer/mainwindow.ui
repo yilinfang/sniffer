@@ -102,6 +102,26 @@
         <string>请选择一个过滤器规则</string>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>tcp</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>udp</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>arp</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>icmp</string>
+       </property>
+      </item>
      </widget>
      <widget class="QPushButton" name="pushButton_startPcap_tab1">
       <property name="geometry">
