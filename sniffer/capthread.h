@@ -12,7 +12,7 @@ class CapThread : public QThread
 {
     Q_OBJECT
 public:
-    CapThread(pcap_t *_adhandle, pktCount *_npacket, datapktVec &_dataPktLink, dataVec &_dataCharLink);
+    CapThread(pcap_t *_adhandle, pktCount *_npacket, DataPktVec &_dataPktVec, DataVec &_dataVec);
     void stop();
 protected:
     void run();
@@ -21,8 +21,8 @@ private:
     volatile bool isStopped;
     pcap_t *adhandle;
     pktCount *npacket;
-    datapktVec &dataPktLink;
-    dataVec &dataCharLink;
+    DataPktVec &dataPktVec;
+    DataVec &dataVec;
 signals:
     void updateCapInfo(QString time, QString srcMac, QString destMac, QString len, QString protoType, QString srcIP, QString dstIP);
 };

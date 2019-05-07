@@ -2,8 +2,8 @@
 #include <utilities.h>
 #include <QTextStream>
 
-CapThread::CapThread(pcap_t *_adhandle, pktCount *_npacket, datapktVec &_dataPktLink, dataVec &_dataCharLink)\
-    :adhandle(_adhandle), npacket(_npacket), dataPktLink(_dataPktLink), dataCharLink(_dataCharLink), isStopped(false)
+CapThread::CapThread(pcap_t *_adhandle, pktCount *_npacket, DataPktVec &_dataPktVec, DataVec &_dataVec)\
+    :adhandle(_adhandle), npacket(_npacket), dataPktVec(_dataPktVec), dataVec(_dataVec), isStopped(false)
 {
 }
 
@@ -48,8 +48,8 @@ void CapThread::run()
         ppkt_data = (u_char *)malloc(header->len * sizeof(u_char));
         memcpy(ppkt_data, pkt_data, header->len);
 
-        dataPktLink.push_back(data);
-        dataCharLink.push_back(ppkt_data);
+        dataPktVec.push_back(data);
+        dataVec.push_back(ppkt_data);
 
         //预处理，获得时间、长度
 

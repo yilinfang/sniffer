@@ -59,7 +59,7 @@ MainWindow::~MainWindow()
         delete capThread;
         capThread = NULL;
     }
-    for(std::vector<datapkt *>::iterator it = dataPktLink.begin(); it != dataPktLink.end(); it++)
+    for(std::vector<datapkt *>::iterator it = dataPktVec.begin(); it != dataPktVec.end(); it++)
     {
         free((*it)->ethh);
         free((*it)->arph);
@@ -70,7 +70,7 @@ MainWindow::~MainWindow()
         free((*it)->apph);
         free(*it);
     }
-    for(std::vector<u_char *>::iterator it = dataCharLink.begin(); it != dataCharLink.end(); it++)
+    for(std::vector<u_char *>::iterator it = dataVec.begin(); it != dataVec.end(); it++)
     {
         free(*it);
     }
@@ -99,7 +99,7 @@ int MainWindow::startCap()
 {
     u_int netmask;
     struct bpf_program fcode;   //bpf_program结构体在编译BPF过滤规则函数执行成功后将会被填
-    int filterIndex = ui->comboBox_filter_tab1->currentIndex();
+    //int filterIndex = ui->comboBox_filter_tab1->currentIndex();
 
     if(!(adhandle = pcap_open_live(dev->name,    //设备名
                                   65536,    //捕获数据包长度
@@ -133,8 +133,8 @@ int MainWindow::startCap()
         netmask = 0xffffff;
 
     }
-
-    if(filterIndex == 0)
+    QString filter_qstr = ui->lineEdit_filter_tab1->text();
+    if(filter_qstr == "")
     {
         char filter[] = "";
         if(pcap_compile(adhandle, &fcode, filter, 1, netmask) < 0)
@@ -147,7 +147,7 @@ int MainWindow::startCap()
     }
     else
     {
-        QByteArray ba = ui->comboBox_filter_tab1->currentText().toLatin1();
+        QByteArray ba = filter_qstr.toLatin1();
         char *filter = NULL;
         filter = ba.data();     //上述转换中要求QString中不含有中文，否则会出现乱码
         if(pcap_compile(adhandle, &fcode, filter, 1, netmask) < 0)
@@ -183,7 +183,7 @@ int MainWindow::startCap()
             return -1;
         }
     }
-    capThread = new CapThread(adhandle, npacket, dataPktLink, dataCharLink);
+    capThread = new CapThread(adhandle, npacket, dataPktVec, dataVec);
     connect(capThread, SIGNAL(updateCapInfo(QString,QString,QString,QString,QString,QString,QString)), this, SLOT(on_updateCapInfo(QString,QString,QString,QString,QString,QString,QString)));
     capThread->start();
     return 1;
@@ -616,18 +616,12 @@ void MainWindow::on_comboBox_devs_currentIndexChanged(int index)
     }
 }
 
-
-void MainWindow::on_comboBox_filter_tab1_currentIndexChanged(int index)
-{
-    qDebug() << ui->comboBox_filter_tab1->currentText();
-}
-
 void MainWindow::on_tableWidget_tab1_cellClicked(int row, int column)
 {
     ui->textEdit_tab1->clear();
     ui->treeWidget_tab1->clear();
-    datapkt *mem_data = (datapkt*)dataPktLink[row];
-    u_char *print_data = (u_char *)dataCharLink[row];
+    datapkt *mem_data = (datapkt*)dataPktVec[row];
+    u_char *print_data = (u_char *)dataVec[row];
     int print_len = mem_data->len;
     showHexData(print_data, print_len);
     showProtoTree(mem_data, row + 1);
@@ -663,7 +657,7 @@ void MainWindow::on_updateCapInfo(QString time, QString srcMac, QString destMac,
 
 void MainWindow::on_pushButton_startPcap_tab1_clicked()
 {
-    for(std::vector<datapkt *>::iterator it = dataPktLink.begin(); it != dataPktLink.end(); it++)
+    for(std::vector<datapkt *>::iterator it = dataPktVec.begin(); it != dataPktVec.end(); it++)
     {
         free((*it)->ethh);
         free((*it)->arph);
@@ -674,13 +668,13 @@ void MainWindow::on_pushButton_startPcap_tab1_clicked()
         free((*it)->apph);
         free(*it);
     }
-    for(std::vector<u_char *>::iterator it = dataCharLink.begin(); it != dataCharLink.end(); it++)
+    for(std::vector<u_char *>::iterator it = dataVec.begin(); it != dataVec.end(); it++)
     {
         free(*it);
     }
 
-    datapktVec().swap(dataPktLink);
-    dataVec().swap(dataCharLink);
+    DataPktVec().swap(dataPktVec);
+    DataVec().swap(dataVec);
 
     memset(npacket, 0, sizeof(pktCount));
 

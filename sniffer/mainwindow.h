@@ -30,7 +30,6 @@ private:
 
 private slots:
     void on_comboBox_devs_currentIndexChanged(int index);
-    void on_comboBox_filter_tab1_currentIndexChanged(int index);
     void on_tableWidget_tab1_cellClicked(int row, int column);
     void on_updateCapInfo(QString time, QString srcMac, QString destMac, QString len, QString protoType, QString srcIP, QString dstIP);
     void on_pushButton_startPcap_tab1_clicked();
@@ -46,8 +45,8 @@ private:
     pcap_t *adhandle;
     pcap_dumper_t *dumpfile;
     pktCount *npacket;
-    datapktVec dataPktLink;
-    dataVec dataCharLink;
+    DataPktVec dataPktVec;
+    DataVec dataVec;
     int rowCount;
     CapThread *capThread;
     char filepath[512];

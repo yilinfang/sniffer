@@ -136,8 +136,8 @@ typedef struct _datapkt
 }datapkt;
 
 //该容器用于存储数据包分析之后得到的结构体
-typedef std::vector<datapkt *> datapktVec;
+typedef std::vector<datapkt *> DataPktVec;
 //该容器用于存储捕获的单个数据包所构成的字符串，以便在全部打印出来
-typedef std::vector<u_char *> dataVec;
+typedef std::vector<u_char *> DataVec;
 
 #endif // PROTOCOL_H
