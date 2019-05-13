@@ -29,7 +29,7 @@ void CapThread::run()
             continue;
         //用于存储捕获的数据包中的信息
         datapkt *data = (datapkt*)malloc(sizeof(datapkt));
-        data->isHttp =false;
+        data->isHttp = false;
         memset(data, 0, sizeof(datapkt));
 
         data->len = header->len;

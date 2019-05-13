@@ -266,13 +266,139 @@
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
-      <string>ARP攻击</string>
+      <string>ARP欺骗</string>
      </attribute>
-    </widget>
-    <widget class="QWidget" name="tab_3">
-     <attribute name="title">
-      <string>关于</string>
-     </attribute>
+     <widget class="QLabel" name="label_3">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>10</y>
+        <width>100</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>目标IP:</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_4">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>110</y>
+        <width>100</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>目标网关IP:</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_targetIp_lab2">
+      <property name="geometry">
+       <rect>
+        <x>132</x>
+        <y>10</y>
+        <width>850</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_gateIp_lab2">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>110</y>
+        <width>850</width>
+        <height>20</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QTextEdit" name="textEdit_tab2">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>219</y>
+        <width>821</width>
+        <height>451</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_start_lab2">
+      <property name="geometry">
+       <rect>
+        <x>870</x>
+        <y>220</y>
+        <width>110</width>
+        <height>200</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>开始攻击</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_stop_lab2">
+      <property name="geometry">
+       <rect>
+        <x>870</x>
+        <y>470</y>
+        <width>110</width>
+        <height>200</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>结束攻击</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>60</y>
+        <width>100</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>目标MAC:</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_targetMac_lab2">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>60</y>
+        <width>850</width>
+        <height>20</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_5">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>160</y>
+        <width>100</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>目标网关MAC:</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit_gateMac_lab2">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>160</y>
+        <width>850</width>
+        <height>20</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QLabel" name="label_1">

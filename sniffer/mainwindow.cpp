@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <winpcap/Include/Packet32.h>
+#include <ntddndis.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -78,6 +80,10 @@ MainWindow::~MainWindow()
     {
         free(npacket);
     }
+    if(adhandle)
+    {
+        pcap_close(adhandle);
+    }
     delete ui;
 }
 
@@ -108,7 +114,7 @@ int MainWindow::startCap()
                                   errbuf  //错误信息缓冲
                                   )))
     {
-        QMessageBox::warning(this, "open error", tr("网卡接口打开失败"), QMessageBox::Ok);
+        QMessageBox::warning(this, "open error", tr("网卡接口打开失败,请重新打开程序!"), QMessageBox::Ok);
         pcap_freealldevs(alldev);
         alldev = NULL;
         return -1;
@@ -117,8 +123,9 @@ int MainWindow::startCap()
     //检查链路层，判断所在网络是否为以太网
     if(pcap_datalink(adhandle) != DLT_EN10MB)
     {
-        QMessageBox::warning(this, "Sniffer", tr("只支持以太网环境"), QMessageBox::Ok);
-        pcap_freealldevs(alldev);
+        QMessageBox::warning(this, "Sniffer", tr("只支持以太网环境，请重新选择适配器!"), QMessageBox::Ok);
+        //pcap_freealldevs(alldev);
+        pcap_close(adhandle);
         alldev = NULL;
         return -1;
     }
@@ -187,6 +194,11 @@ int MainWindow::startCap()
     connect(capThread, SIGNAL(updateCapInfo(QString,QString,QString,QString,QString,QString,QString)), this, SLOT(on_updateCapInfo(QString,QString,QString,QString,QString,QString,QString)));
     capThread->start();
     return 1;
+
+}
+
+int MainWindow::startArpCheat()
+{
 
 }
 
@@ -565,7 +577,6 @@ void MainWindow::showProtoTree(datapkt *data, int num)
                     }
                     content += httpps2[i];
                 }
-                level8->addChild(new QTreeWidgetItem(level8,QStringList("(Data)(Data)")));
             }
         }
         else if(data->iph->proto == PROTO_UDP)  //UDP协议
@@ -605,14 +616,6 @@ void MainWindow::on_comboBox_devs_currentIndexChanged(int index)
     for(int i = 0; i < index - 1; i++)
     {
         dev = dev->next;
-    }
-    qDebug() << ui->comboBox_devs->currentText();
-    qDebug() << QString(dev->description);
-    if (!(adhandle = pcap_open_live(dev->name, 65536, 1, 1000, errbuf)))
-    {
-        QMessageBox::warning(this, tr("sniffer"), tr("无法打开接口"),QMessageBox::Yes);
-        pcap_freealldevs(alldev);
-        alldev = NULL;
     }
 }
 
@@ -713,4 +716,106 @@ void MainWindow::on_pushButton_stopPcap_tab1_clicked()
         delete capThread;
         capThread = NULL;
     }
+    if(adhandle)
+    {
+        pcap_close(adhandle);
+        adhandle = NULL;
+    }
+}
+
+void MainWindow::on_tabWidget_currentChanged(int index)
+{
+    if(index != 0)
+    {
+        if(capThread)
+        {
+            if(capThread->isRunning())
+            {
+                capThread->stop();
+                capThread->quit();
+            }
+            while(!capThread->isFinished());
+            delete capThread;
+            capThread = NULL;
+        }
+        for(std::vector<datapkt *>::iterator it = dataPktVec.begin(); it != dataPktVec.end(); it++)
+        {
+            free((*it)->ethh);
+            free((*it)->arph);
+            free((*it)->iph);
+            free((*it)->icmph);
+            free((*it)->udph);
+            free((*it)->tcph);
+            free((*it)->apph);
+            free(*it);
+        }
+        for(std::vector<u_char *>::iterator it = dataVec.begin(); it != dataVec.end(); it++)
+        {
+            free(*it);
+        }
+        if(npacket)
+        {
+            free(npacket);
+        }
+        if(adhandle)
+        {
+            pcap_close(adhandle);
+            adhandle = NULL;
+        }
+    }
+    if(index != 1)
+    {
+        if(adhandle)
+        {
+            pcap_close(adhandle);
+            adhandle = NULL;
+        }
+    }
+}
+
+void MainWindow::on_pushButton_start_lab2_clicked()
+{
+    ui->textEdit_tab1->clear();
+
+}
+
+void MainWindow::on_pushButton_stop_lab2_clicked()
+{
+    QString targetIp_qstr;
+    QString targetMac_qstr;
+    QString gateIp_qstr;
+    QString gateMac_qstr;
+    u_char *currentMac = getSelfMac(dev->name);
+    u_long destIp;
+    u_char *targetMac;
+    u_long gateIp;
+    u_char *gateMac;
+    u_long netmask;
+}
+
+void MainWindow::on_updateArpCheatMsg(QString msg)
+{
+    ui->textEdit_tab2->append(msg);
+}
+
+u_char* MainWindow::getSelfMac(char *devname)
+{
+    //打开适配器
+    LPADAPTER lpAdapter = PacketOpenAdapter(devname);
+    //分配一块空间
+    PPACKET_OID_DATA OidData = (PPACKET_OID_DATA)malloc(6 + sizeof(PACKET_OID_DATA));
+    OidData->Oid = OID_802_3_CURRENT_ADDRESS;
+    OidData->Length = 6;
+    ZeroMemory(OidData->Data, 6);
+    //询问NIC driver获取本次mac
+    BOOLEAN Status = PacketRequest(lpAdapter, FALSE, OidData);
+    u_char* res = NULL;
+    if(Status)
+    {
+        u_char * res = (u_char *)malloc(6 * sizeof (u_char));
+        memcpy(res,(u_char*)(OidData->Data),6);
+    }
+    free(OidData);
+    PacketCloseAdapter(lpAdapter);
+    return res;
 }

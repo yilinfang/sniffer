@@ -28,12 +28,15 @@ SOURCES += \
     capthread.cpp \
         main.cpp \
         mainwindow.cpp \
+    sendthread.cpp \
     utilities.cpp
 
 HEADERS += \
+    arphead.h \
     capthread.h \
         mainwindow.h \
     protocol.h \
+    sendthread.h \
     utilities.h
 
 FORMS += \

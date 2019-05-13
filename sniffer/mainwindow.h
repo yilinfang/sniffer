@@ -8,6 +8,7 @@
 #include "protocol.h"
 #include "utilities.h"
 #include "capthread.h"
+#include "sendthread.h"
 #include <QDir>
 
 namespace Ui {
@@ -25,16 +26,28 @@ public:
 private:
     int initCap();
     int startCap();
+    int startArpCheat();
     void showHexData(u_char* data, int len);
     void showProtoTree(datapkt* data, int num);
 
 private slots:
     void on_comboBox_devs_currentIndexChanged(int index);
+
     void on_tableWidget_tab1_cellClicked(int row, int column);
+
     void on_updateCapInfo(QString time, QString srcMac, QString destMac, QString len, QString protoType, QString srcIP, QString dstIP);
+
     void on_pushButton_startPcap_tab1_clicked();
 
     void on_pushButton_stopPcap_tab1_clicked();
+
+    void on_tabWidget_currentChanged(int index);
+
+    void on_pushButton_start_lab2_clicked();
+
+    void on_pushButton_stop_lab2_clicked();
+
+    void on_updateArpCheatMsg(QString msg);
 
 private:
     Ui::MainWindow *ui;
@@ -43,13 +56,13 @@ private:
     pcap_if_t *dev;
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *adhandle;
-    pcap_dumper_t *dumpfile;
     pktCount *npacket;
     DataPktVec dataPktVec;
     DataVec dataVec;
     int rowCount;
     CapThread *capThread;
-    char filepath[512];
+    SendThread *sendThread;
+    u_char* getSelfMac(char *devname);
 };
 
 #endif // MAINWINDOW_H

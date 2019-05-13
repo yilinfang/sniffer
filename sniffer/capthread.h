@@ -1,5 +1,6 @@
 #ifndef CAPTHREAD_H
 #define CAPTHREAD_H
+
 #include <QThread>
 #include <QMutex>
 #define WPCAP
@@ -8,6 +9,7 @@
 #include <remote-ext.h>
 #include <winsock.h>
 #include <protocol.h>
+
 class CapThread : public QThread
 {
     Q_OBJECT
