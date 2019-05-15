@@ -486,6 +486,14 @@ void MainWindow::showProtoTree(datapkt *data, int num)
 
             sprintf(buf, "类型: %d", data->icmph->type);
             showStr = QString(buf);
+            if(data->icmph->type == 0)
+            {
+                showStr += "(Echo)";
+            }
+            else if (data->icmph->type == 8)
+            {
+                showStr += "(Echo Reply)";
+            }
             QTreeWidgetItem *icmpType = new QTreeWidgetItem(level4);
             icmpType->setText(0, showStr);
 
