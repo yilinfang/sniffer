@@ -9,7 +9,6 @@
 #include <remote-ext.h>
 #include <winsock.h>
 #include <protocol.h>
-#include "arphead.h"
 
 class SendThread : public QThread
 {

@@ -42,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent) :
     npacket = (pktCount *)malloc(sizeof(pktCount));
     memset(npacket, 0, sizeof(pktCount));
     capThread = NULL;
+    sendThread = NULL;
+    adhandle = NULL;
 }
 
 MainWindow::~MainWindow()
@@ -72,6 +74,7 @@ MainWindow::~MainWindow()
         free((*it)->apph);
         free(*it);
     }
+
     for(std::vector<u_char *>::iterator it = dataVec.begin(); it != dataVec.end(); it++)
     {
         free(*it);
@@ -79,6 +82,28 @@ MainWindow::~MainWindow()
     if(npacket)
     {
         free(npacket);
+    }
+    if(sendThread)
+    {
+        if(sendThread->isRunning())
+        {
+            sendThread->stop();
+            sendThread->quit();
+        }
+        while(!sendThread->isFinished());
+        delete sendThread;
+    }
+    if(targetMac)
+    {
+        free(targetMac);
+    }
+    if(gateMac)
+    {
+        free(gateMac);
+    }
+    if(selfmac)
+    {
+        free(selfmac);
     }
     if(adhandle)
     {
@@ -199,7 +224,50 @@ int MainWindow::startCap()
 
 int MainWindow::startArpCheat()
 {
+    if((adhandle = pcap_open_live(dev->name,    //设备名
+                                  65536,    //捕获数据包长度
+                                  1,    //设置成混杂模式
+                                  1000,    //读超时设置
+                                  errbuf  //错误信息缓冲
+                                  )) == NULL)
+    {
+        QMessageBox::warning(this, "cheating error", tr("网卡接口打开失败"), QMessageBox::Ok);
+        pcap_freealldevs(alldev);
+        alldev = NULL;
+        return -1;
+    }
+    qDebug() << 1;
+    selfmac = getSelfMac(dev->name);
+    qDebug() << selfmac;
+    QString targetIp_qstr = ui->lineEdit_targetIp_lab2->text();
+    QString targetMac_qstr = ui->lineEdit_targetMac_lab2->text();
+    QString gateIp_qstr = ui->lineEdit_gateIp_lab2->text();
+    QString gateMac_qstr = ui->lineEdit_gateMac_lab2->text();
 
+    QByteArray ba;
+
+    ba = targetIp_qstr.toLatin1();
+    const char* targetIp_str = ba.data();
+    targetIp = inet_addr(targetIp_str);
+
+    ba = gateIp_qstr.toLatin1();
+    const char* gateIp_str = ba.data();
+    gateIp = inet_addr(gateIp_str);
+
+    ba = targetMac_qstr.toLatin1();
+    const char *targetMac_str = ba.data();
+    targetMac = (u_char *)malloc(6 * sizeof(u_char));        //注意释放malloc内存
+    transMac(targetMac_str, targetMac);
+
+    ba = gateMac_qstr.toLatin1();
+    const char *gateMac_str = ba.data();
+    gateMac = (u_char *)malloc(6 * sizeof(u_char));        //注意释放malloc内存
+    transMac(gateMac_str, gateMac);
+    qDebug() << 1;
+    sendThread = new SendThread(adhandle, selfmac, targetIp, targetMac, gateIp, gateMac);
+    connect(sendThread, SIGNAL(sendLogMsg(QString)), this, SLOT(on_updateSendInfo(QString)));
+    sendThread->start();
+    return 1;
 }
 
 void MainWindow::showHexData(u_char *data, int len)
@@ -765,6 +833,32 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     }
     if(index != 1)
     {
+        if(targetMac)
+        {
+            free(targetMac);
+            targetMac = NULL;
+        }
+        if(gateMac)
+        {
+            free(gateMac);
+            gateMac = NULL;
+        }
+        if(selfmac)
+        {
+            free(selfmac);
+            selfmac = NULL;
+        }
+        if(sendThread)
+        {
+            if(sendThread->isRunning())
+            {
+                sendThread->stop();
+                sendThread->quit();
+            }
+            while(!sendThread->isFinished());
+            delete sendThread;
+            sendThread = NULL;
+        }
         if(adhandle)
         {
             pcap_close(adhandle);
@@ -776,26 +870,64 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 void MainWindow::on_pushButton_start_lab2_clicked()
 {
     ui->textEdit_tab1->clear();
+    if(targetMac)
+    {
+        free(targetMac);
+        targetMac = NULL;
+    }
+    if(gateMac)
+    {
+        free(gateMac);
+        gateMac = NULL;
+    }
+    if(selfmac)
+    {
+        free(selfmac);
+        selfmac = NULL;
+    }
+    if(sendThread)
+    {
+        if(sendThread->isRunning())
+        {
+            sendThread->stop();
+            sendThread->quit();
+        }
+        while(!sendThread->isFinished());
+        delete sendThread;
+        sendThread = NULL;
+    }
+    if(startArpCheat() < 0)
+    {
+        return;
+    }
 
 }
 
 void MainWindow::on_pushButton_stop_lab2_clicked()
 {
-    QString targetIp_qstr;
-    QString targetMac_qstr;
-    QString gateIp_qstr;
-    QString gateMac_qstr;
-    u_char *currentMac = getSelfMac(dev->name);
-    u_long destIp;
-    u_char *targetMac;
-    u_long gateIp;
-    u_char *gateMac;
-    u_long netmask;
+    if(sendThread)
+    {
+        sendThread->stop();
+        sendThread->quit();
+        while(!sendThread->isFinished());
+        delete sendThread;
+        sendThread = NULL;
+    }
+    if(adhandle)
+    {
+        pcap_close(adhandle);
+        adhandle = NULL;
+    }
 }
 
 void MainWindow::on_updateArpCheatMsg(QString msg)
 {
     ui->textEdit_tab2->append(msg);
+}
+
+void MainWindow::on_updateSendInfo(QString str)
+{
+    ui->textEdit_tab2->append(str);
 }
 
 u_char* MainWindow::getSelfMac(char *devname)
@@ -812,10 +944,32 @@ u_char* MainWindow::getSelfMac(char *devname)
     u_char* res = NULL;
     if(Status)
     {
-        u_char * res = (u_char *)malloc(6 * sizeof (u_char));
+        res = (u_char *)malloc(6 * sizeof (u_char));
         memcpy(res,(u_char*)(OidData->Data),6);
     }
+    qDebug() << "Status:" << Status;
     free(OidData);
     PacketCloseAdapter(lpAdapter);
     return res;
+}
+
+void MainWindow::transMac(const char *src, u_char *dest)
+{
+    short i;
+    int sourceLen = strlen(src);
+    unsigned char highByte, lowByte;
+    for (i = 0; i < sourceLen; i += 3)
+    {
+        highByte = toupper(src[i]);
+        lowByte  = toupper(src[i + 1]);
+        if(highByte > 0x39)
+            highByte -= 0x37;
+        else
+            highByte -= 0x30;
+        if(lowByte > 0x39)
+            lowByte -= 0x37;
+        else
+            lowByte -= 0x30;
+        dest[i/3] = (highByte << 4) | lowByte;
+    }
 }

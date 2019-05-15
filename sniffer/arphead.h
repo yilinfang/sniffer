@@ -1,5 +1,4 @@
 #ifndef ARPHEAD_H
-#ifndef ARPHEAD_H
 #define ARPHEAD_H
 
 //设置字节对齐为1
@@ -33,11 +32,5 @@ typedef struct arp_packet
 }arp_packet;
 //取消设置的1字节对齐，恢复为默认的4字节对齐
 #pragma pack()
-
-
-#endif // ARPHEAD_H
-#define ARPHEAD_H
-
-
 
 #endif // ARPHEAD_H

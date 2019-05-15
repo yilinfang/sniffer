@@ -49,6 +49,7 @@ private slots:
 
     void on_updateArpCheatMsg(QString msg);
 
+    void on_updateSendInfo(QString str);
 private:
     Ui::MainWindow *ui;
     int devCount;
@@ -63,6 +64,12 @@ private:
     CapThread *capThread;
     SendThread *sendThread;
     u_char* getSelfMac(char *devname);
+    void transMac(const char* src, u_char* dest);
+    u_char* selfmac;
+    u_char* targetMac;
+    u_char* gateMac;
+    u_long targetIp;
+    u_long gateIp;
 };
 
 #endif // MAINWINDOW_H
